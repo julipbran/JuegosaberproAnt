@@ -1,0 +1,555 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#c9a227;--silver:#8e9eab;--bronze:#a0522d;
+  --top:#1a3a5c;--accent:#e63946;--accent2:#2a9d8f;
+  --bg1:#0d1b2a;--bg2:#1b2838;--bg3:#243447;
+  --t1:#f0f4f8;--t2:#a8b8c8;--t3:#6b7f90;
+  --card-bg:#1e2f42;--border:#2d4460;
+}
+body{font-family:'Georgia',serif;background:var(--bg1);color:var(--t1);min-height:100vh;overflow-x:hidden}
+h1,h2,h3{font-family:'Georgia',serif}
+.sr-only{position:absolute;width:1px;height:1px;clip:rect(0,0,0,0);overflow:hidden}
+.game-wrap{max-width:700px;margin:0 auto;padding:0}
+.hero{background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 50%,#0d1b2a 100%);padding:28px 20px 20px;text-align:center;border-bottom:1px solid var(--accent);position:relative;overflow:hidden}
+.hero::before{content:'🇨🇴';position:absolute;font-size:120px;opacity:.06;top:-10px;left:50%;transform:translateX(-50%)}
+.hero h1{font-size:22px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.hero p{font-size:13px;color:var(--t2);margin-bottom:16px}
+.xp-bar-wrap{background:var(--bg3);border-radius:20px;height:6px;margin:0 auto 8px;max-width:300px;overflow:hidden}
+.xp-bar{height:6px;background:linear-gradient(90deg,var(--accent2),var(--gold));border-radius:20px;transition:width .5s}
+.player-stats{display:flex;justify-content:center;gap:20px;font-size:12px;color:var(--t2)}
+.player-stats span b{color:var(--gold)}
+.nav-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg2)}
+.nav-tab{flex:1;padding:10px 4px;font-size:12px;text-align:center;cursor:pointer;color:var(--t3);border:none;background:none;transition:.2s;border-bottom:2px solid transparent}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold);background:var(--bg3)}
+.nav-tab:hover:not(.active){color:var(--t1);background:var(--bg3)}
+.screen{display:none;padding:16px}
+.screen.active{display:block}
+
+/* RANKING SCREEN */
+.rank-controls{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.rank-controls select{flex:1;min-width:120px;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:7px 10px;border-radius:6px;font-size:12px}
+.rank-list{}
+.rank-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:.15s;position:relative}
+.rank-item:hover{border-color:var(--accent2);transform:translateX(2px)}
+.rank-num{font-size:18px;font-weight:700;width:28px;text-align:center;flex-shrink:0}
+.rank-num.r1{color:var(--gold)}
+.rank-num.r2{color:var(--silver)}
+.rank-num.r3{color:var(--bronze)}
+.rank-num.other{color:var(--t3);font-size:13px}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-size:13px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-sub{font-size:11px;color:var(--t2);margin-top:2px}
+.rank-score{text-align:right;flex-shrink:0}
+.rank-score .score-val{font-size:16px;font-weight:700;color:var(--accent2)}
+.rank-score .score-lbl{font-size:10px;color:var(--t3)}
+.rank-bar-wrap{position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--bg3);border-radius:0 0 8px 8px}
+.rank-bar{height:2px;background:var(--accent2);border-radius:0 0 8px 8px;transition:width .5s}
+.detail-modal{display:none;background:var(--bg2);border:1px solid var(--accent);border-radius:10px;padding:16px;margin-top:10px}
+.detail-modal.open{display:block}
+.detail-title{font-size:14px;font-weight:700;color:var(--gold);margin-bottom:12px}
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.comp-item{background:var(--bg3);border-radius:6px;padding:8px 10px}
+.comp-label{font-size:10px;color:var(--t3);margin-bottom:3px}
+.comp-val{font-size:14px;font-weight:700;color:var(--t1)}
+.comp-bar{height:3px;background:var(--bg1);border-radius:2px;margin-top:4px;overflow:hidden}
+.comp-fill{height:3px;border-radius:2px;background:var(--accent2)}
+
+/* BATTLE */
+.battle-selects{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end;margin-bottom:14px}
+.vs-badge{text-align:center;font-size:18px;font-weight:700;color:var(--accent);line-height:1;padding-bottom:4px}
+.battle-select-wrap label{font-size:11px;color:var(--t3);margin-bottom:4px;display:block}
+.battle-select-wrap select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:8px;border-radius:6px;font-size:12px}
+.battle-btn{display:block;width:100%;padding:10px;background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:700;border-radius:7px;cursor:pointer;letter-spacing:1px;margin-bottom:14px}
+.battle-btn:hover{background:#c1121f}
+.battle-result{display:none}
+.battle-result.show{display:block}
+.battle-header{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;margin-bottom:14px;text-align:center}
+.battle-uni-name{font-size:12px;font-weight:700;color:var(--t1);line-height:1.3}
+.battle-uni-score{font-size:22px;font-weight:700;margin-top:4px}
+.battle-uni-score.winner{color:var(--gold)}
+.battle-uni-score.loser{color:var(--t3)}
+.battle-vs-center{font-size:11px;color:var(--t3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.winner-badge{background:var(--gold);color:#000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:4px;display:inline-block}
+.comp-battle-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.comp-battle-label{font-size:11px;color:var(--t2);width:110px;flex-shrink:0;text-align:center}
+.comp-battle-bar-wrap{flex:1;display:flex;gap:4px;align-items:center}
+.cbb-left{flex:1;height:14px;background:var(--bg3);border-radius:2px;overflow:hidden;display:flex;justify-content:flex-end}
+.cbb-right{flex:1;height:14px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.cbb-fill-l{height:14px;background:#3a86ff;border-radius:2px;transition:width .6s}
+.cbb-fill-r{height:14px;background:var(--accent);border-radius:2px;transition:width .6s}
+.cbb-vals{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-bottom:2px}
+.insight-box{background:var(--bg3);border-left:3px solid var(--gold);padding:10px 12px;border-radius:0 6px 6px 0;margin-top:12px;font-size:12px;color:var(--t2);line-height:1.5}
+.insight-box b{color:var(--gold)}
+
+/* QUIZ */
+.quiz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.quiz-score-badge{background:var(--bg3);border:1px solid var(--gold);padding:4px 12px;border-radius:20px;font-size:12px;color:var(--gold);font-weight:700}
+.timer-bar-wrap{height:4px;background:var(--bg3);border-radius:2px;margin-bottom:16px;overflow:hidden}
+.timer-bar{height:4px;background:var(--accent);transition:width 1s linear;border-radius:2px}
+.question-card{background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.q-num{font-size:11px;color:var(--t3);margin-bottom:6px}
+.q-text{font-size:14px;color:var(--t1);line-height:1.5;margin-bottom:14px}
+.q-options{display:grid;gap:8px}
+.q-opt{padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:13px;color:var(--t1);text-align:left;transition:.15s}
+.q-opt:hover:not(:disabled){border-color:var(--accent2);background:var(--bg2)}
+.q-opt.correct{background:#1a3d2e;border-color:#2a9d8f;color:#a8e6cf}
+.q-opt.wrong{background:#3d1a1a;border-color:var(--accent);color:#f4a0a0}
+.q-opt:disabled{cursor:default}
+.answer-explain{background:var(--bg3);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--t2);margin-top:8px;line-height:1.5;display:none}
+.answer-explain.show{display:block}
+.next-btn{display:none;width:100%;padding:10px;background:var(--accent2);border:none;color:#fff;font-size:13px;font-weight:700;border-radius:7px;cursor:pointer;margin-top:8px;letter-spacing:1px}
+.next-btn.show{display:block}
+.quiz-end{text-align:center;padding:24px 0}
+.quiz-end .final-score{font-size:48px;font-weight:700;color:var(--gold);line-height:1}
+.quiz-end .final-label{font-size:14px;color:var(--t2);margin-top:4px}
+.quiz-end .medal{font-size:40px;margin:10px 0}
+.quiz-end .restart-btn{padding:10px 24px;background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:700;border-radius:7px;cursor:pointer;margin-top:14px}
+
+/* GUESS */
+.guess-pista{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.pista-label{font-size:11px;color:var(--t3);margin-bottom:3px}
+.pista-val{font-size:14px;color:var(--t1)}
+.pista-reveal{background:var(--bg3);border:1px solid var(--border);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;color:var(--t2)}
+.pista-reveal:hover{border-color:var(--accent2);color:var(--t1)}
+.guess-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.guess-opt{padding:9px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:12px;color:var(--t1);transition:.15s}
+.guess-opt:hover:not(:disabled){border-color:var(--gold)}
+.guess-opt.correct{background:#1a3d2e;border-color:var(--accent2)}
+.guess-opt.wrong{background:#3d1a1a;border-color:var(--accent)}
+.points-label{text-align:center;font-size:13px;color:var(--t2);margin-top:8px}
+.points-label b{color:var(--gold);font-size:16px}
+.new-uni-btn{width:100%;padding:9px;background:var(--top);border:1px solid var(--border);color:var(--t1);font-size:12px;border-radius:7px;cursor:pointer;margin-top:8px}
+.new-uni-btn:hover{background:var(--bg3)}
+
+/* TREND */
+.trend-select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:12px}
+canvas{max-width:100%}
+
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px}
+.tag.pub{background:#1a3a5c;color:#7ec8e3}
+.tag.pri{background:#3a1a3a;color:#e8a0e8}
+.tag.virt{background:#1a3a2a;color:#7ecba8}
+</style>
+
+<div class="game-wrap">
+<h2 class="sr-only">Juego interactivo de universidades colombianas basado en datos Saber Pro 2017-2024</h2>
+
+<div class="hero">
+  <h1>🏛️ Colombia U-Rankings</h1>
+  <p>Datos reales Saber Pro · 40 universidades · 2017–2024</p>
+  <div class="xp-bar-wrap"><div class="xp-bar" id="xpBar" style="width:5%"></div></div>
+  <div class="player-stats">
+    <span>XP: <b id="xpVal">0</b></span>
+    <span>Nivel: <b id="lvlVal">1</b></span>
+    <span>Racha: <b id="rachVal">0</b>🔥</span>
+    <span>Puntos: <b id="ptsVal">0</b></span>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="showScreen('ranking')">🏆 Ranking</button>
+  <button class="nav-tab" onclick="showScreen('battle')">⚔️ Batalla</button>
+  <button class="nav-tab" onclick="showScreen('quiz')">🧠 Quiz</button>
+  <button class="nav-tab" onclick="showScreen('guess')">🎓 Adivina</button>
+  <button class="nav-tab" onclick="showScreen('trend')">📈 Evolución</button>
+</div>
+
+<!-- RANKING -->
+<div class="screen active" id="screen-ranking">
+  <div class="rank-controls">
+    <select id="rankMetric" onchange="renderRanking()">
+      <option value="global_avg">Puntaje global</option>
+      <option value="ingles">Inglés</option>
+      <option value="razona">Razonamiento cuantitativo</option>
+      <option value="lectura">Lectura crítica</option>
+      <option value="ciudadania">Competencias ciudadanas</option>
+      <option value="escrita">Comunicación escrita</option>
+    </select>
+    <select id="rankCity" onchange="renderRanking()">
+      <option value="">Todas las ciudades</option>
+    </select>
+  </div>
+  <div id="rankList"></div>
+  <div class="detail-modal" id="uniDetail"></div>
+</div>
+
+<!-- BATTLE -->
+<div class="screen" id="screen-battle">
+  <div class="battle-selects">
+    <div class="battle-select-wrap">
+      <label>Universidad A</label>
+      <select id="uniA"></select>
+    </div>
+    <div class="vs-badge">VS</div>
+    <div class="battle-select-wrap">
+      <label>Universidad B</label>
+      <select id="uniB"></select>
+    </div>
+  </div>
+  <button class="battle-btn" onclick="runBattle()">⚔️ INICIAR BATALLA</button>
+  <div class="battle-result" id="battleResult"></div>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="screen-quiz">
+  <div id="quizGame"></div>
+</div>
+
+<!-- GUESS -->
+<div class="screen" id="screen-guess">
+  <div id="guessGame"></div>
+</div>
+
+<!-- TREND -->
+<div class="screen" id="screen-trend">
+  <select class="trend-select" id="trendUni" onchange="renderTrend()">
+    <option value="">Selecciona una universidad...</option>
+  </select>
+  <div style="position:relative;height:280px;"><canvas id="trendChart" role="img" aria-label="Evolución histórica del puntaje Saber Pro de la universidad seleccionada">Selecciona una universidad para ver su evolución.</canvas></div>
+  <div id="trendInsight" class="insight-box" style="margin-top:10px;display:none"></div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const DATA = {"universities":[{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EIA-MEDELLIN","n":1253,"global_avg":181.14,"lectura":179.72,"razona":195.68,"ingles":202.04,"ciudadania":170.28,"escrita":157.97,"modalidad":"PRESENCIAL","nombre_corto":"UNIVERSIDAD EIA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD NACIONAL DE COLOMBIA-MEDELLIN","n":6188,"global_avg":171.77,"lectura":174.97,"razona":189.9,"ingles":179.3,"ciudadania":165.38,"escrita":149.28,"modalidad":"PRESENCIAL","nombre_corto":"UNIVERSIDAD NACIONAL DE COLOMBIA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EAFIT--MEDELLIN","n":7729,"global_avg":166.73,"lectura":165.81,"razona":171.0,"ingles":189.07,"ciudadania":158.34,"escrita":149.44,"modalidad":"PRESENCIAL","nombre_corto":"UNIVERSIDAD EAFIT","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD CES-MEDELLIN","n":2678,"global_avg":161.21,"lectura":165.33,"razona":164.68,"ingles":177.75,"ciudadania":153.33,"escrita":144.98,"modalidad":"PRESENCIAL","nombre_corto":"UNIVERSIDAD CES","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE ANTIOQUIA-CARMEN DE VIBORAL","n":659,"global_avg":159.29,"lectura":163.78,"razona":167.52,"ingles":163.2,"ciudadania":155.98,"escrita":145.98,"modalidad":"PRESENCIAL","nombre_corto":"U. DE ANTIOQUIA (Oriente)","ciudad":"CARMEN DE VIBORAL"},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE ANTIOQUIA-MEDELLIN","n":20015,"global_avg":158.11,"lectura":165.55,"razona":167.45,"ingles":159.81,"ciudadania":153.91,"escrita":143.84,"modalidad":"PRESENCIAL","nombre_corto":"UNIVERSIDAD DE ANTIOQUIA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD PONTIFICIA BOLIVARIANA-MEDELLIN","n":8337,"global_avg":157.22,"lectura":160.84,"razona":162.33,"ingles":170.03,"ciudadania":150.1,"escrita":142.8,"modalidad":"PRESENCIAL","nombre_corto":"U. PONTIFICIA BOLIVARIANA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"INSTITUCION UNIVERSITARIA DIGITAL DE ANTIOQUIA -IU. DIGITAL","n":443,"global_avg":149.99,"lectura":154.64,"razona":151.22,"ingles":148.97,"ciudadania":149.0,"escrita":146.1,"modalidad":"DISTANCIA VITUAL","nombre_corto":"IU DIGITAL DE ANTIOQUIA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE MEDELLIN-MEDELLIN","n":5874,"global_avg":147.6,"lectura":149.15,"razona":156.98,"ingles":154.98,"ciudadania":141.48,"escrita":135.39,"modalidad":"PRESENCIAL","nombre_corto":"UNIVERSIDAD DE MEDELLIN","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"CORPORACION UNIVERSITARIA U DE COLOMBIA-MEDELLIN","n":485,"global_avg":143.58,"lectura":144.06,"razona":152.0,"ingles":136.36,"ciudadania":139.15,"escrita":146.32,"modalidad":"PRESENCIAL","nombre_corto":"CORP. U. DE COLOMBIA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"FUNDACION DE EDUCACION SUPERIOR SAN JOSE -FESSANJOSE-BOGOTÃ D.C.","n":825,"global_avg":143.1,"lectura":144.95,"razona":152.16,"ingles":145.68,"ciudadania":138.73,"escrita":133.97,"modalidad":"PRESENCIAL","nombre_corto":"FESSANJOSE","ciudad":"BOGOTA"},{"INST_NOMBRE_INSTITUCION":"CORPORACION UNIVERSITARIA LASALLISTA-CALDAS","n":1022,"global_avg":141.05,"lectura":143.19,"razona":150.86,"ingles":148.19,"ciudadania":134.03,"escrita":129.0,"modalidad":"PRESENCIAL","nombre_corto":"CORP. U. LASALLISTA","ciudad":"CALDAS"},{"INST_NOMBRE_INSTITUCION":"CORPORACION COLEGIATURA COLOMBIANA-MEDELLIN","n":541,"global_avg":140.69,"lectura":139.2,"razona":145.68,"ingles":163.23,"ciudadania":127.56,"escrita":127.78,"modalidad":"PRESENCIAL","nombre_corto":"COLEGIATURA COLOMBIANA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"POLITECNICO GRANCOLOMBIANO-BOGOTÃ D.C.","n":3901,"global_avg":140.63,"lectura":143.85,"razona":148.8,"ingles":139.01,"ciudadania":136.22,"escrita":135.27,"modalidad":"PRESENCIAL","nombre_corto":"POLITECNICO GRANCOLOMBIANO","ciudad":"BOGOTA"},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD AUTONOMA LATINOAMERICANA-UNAULA-MEDELLIN","n":2486,"global_avg":140.37,"lectura":141.96,"razona":145.92,"ingles":141.78,"ciudadania":140.35,"escrita":131.83,"modalidad":"PRESENCIAL","nombre_corto":"UNAULA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"FUNDACION UNIVERSITARIA-CEIPA-SABANETA","n":2525,"global_avg":140.32,"lectura":140.82,"razona":149.88,"ingles":146.58,"ciudadania":130.93,"escrita":133.38,"modalidad":"PRESENCIAL","nombre_corto":"CEIPA","ciudad":"SABANETA"},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD CATOLICA DE ORIENTE-RIONEGRO","n":3179,"global_avg":139.63,"lectura":141.84,"razona":148.18,"ingles":145.71,"ciudadania":130.27,"escrita":132.14,"modalidad":"PRESENCIAL","nombre_corto":"U. CATOLICA DE ORIENTE","ciudad":"RIONEGRO"},{"INST_NOMBRE_INSTITUCION":"CORPORACION UNIVERSITARIA DE SABANETA- UNISABANETA-SABANETA","n":882,"global_avg":138.59,"lectura":140.05,"razona":146.28,"ingles":137.39,"ciudadania":134.17,"escrita":135.07,"modalidad":"PRESENCIAL","nombre_corto":"UNISABANETA","ciudad":"SABANETA"},{"INST_NOMBRE_INSTITUCION":"COLEGIO MAYOR DE ANTIOQUIA-MEDELLIN","n":2233,"global_avg":138.38,"lectura":141.56,"razona":149.99,"ingles":140.35,"ciudadania":130.85,"escrita":129.15,"modalidad":"PRESENCIAL","nombre_corto":"COLEGIO MAYOR DE ANTIOQUIA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD NACIONAL ABIERTA Y A DISTANCIA UNAD-BOGOTÃ D.C.","n":1550,"global_avg":138.13,"lectura":141.89,"razona":146.88,"ingles":136.77,"ciudadania":131.59,"escrita":133.53,"modalidad":"DISTANCIA","nombre_corto":"UNAD","ciudad":"BOGOTA"},{"INST_NOMBRE_INSTITUCION":"CORPORACION UNIVERSITARIA MINUTO DE DIOS -UNIMINUTO-BOGOTÃ D.C.","n":3149,"global_avg":137.37,"lectura":141.69,"razona":144.57,"ingles":134.19,"ciudadania":131.39,"escrita":135.02,"modalidad":"PRESENCIAL","nombre_corto":"UNIMINUTO BOGOTA","ciudad":"BOGOTA"},{"INST_NOMBRE_INSTITUCION":"FUNDACION UNIVERSITARIA LUIS AMIGO FUNLAM-MEDELLIN","n":6830,"global_avg":136.34,"lectura":140.79,"razona":142.23,"ingles":141.28,"ciudadania":128.77,"escrita":128.62,"modalidad":"PRESENCIAL","nombre_corto":"FUNLAM","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"INSTITUCION UNIVERSITARIA DE ENVIGADO-ENVIGADO","n":2419,"global_avg":136.06,"lectura":137.33,"razona":143.71,"ingles":141.71,"ciudadania":129.41,"escrita":128.13,"modalidad":"PRESENCIAL","nombre_corto":"IU DE ENVIGADO","ciudad":"ENVIGADO"},{"INST_NOMBRE_INSTITUCION":"CORPORACION UNIVERSITARIA REMINGTON-MEDELLIN","n":3430,"global_avg":135.74,"lectura":137.77,"razona":147.16,"ingles":135.1,"ciudadania":129.55,"escrita":129.12,"modalidad":"PRESENCIAL","nombre_corto":"U. REMINGTON","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"POLITECNICO COLOMBIANOJAIME ISAZA CADAVID-MEDELLIN","n":6587,"global_avg":135.6,"lectura":136.2,"razona":151.8,"ingles":136.74,"ciudadania":126.97,"escrita":126.31,"modalidad":"PRESENCIAL","nombre_corto":"POLITECNICO COLOMBIANO J.I.C.","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE SAN BUENAVENTURA-MEDELLIN","n":2721,"global_avg":135.58,"lectura":137.55,"razona":145.91,"ingles":141.71,"ciudadania":125.99,"escrita":126.73,"modalidad":"PRESENCIAL","nombre_corto":"U. SAN BUENAVENTURA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"CORPORACION UNIVERSITARIA ADVENTISTA-MEDELLIN","n":730,"global_avg":135.34,"lectura":137.07,"razona":143.84,"ingles":141.5,"ciudadania":122.33,"escrita":131.96,"modalidad":"PRESENCIAL","nombre_corto":"CORP. U. ADVENTISTA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"FUNDACION UNIVERSITARIA DEL AREA ANDINA-BOGOTÃ D.C.","n":494,"global_avg":133.35,"lectura":135.05,"razona":141.49,"ingles":133.68,"ciudadania":127.26,"escrita":129.29,"modalidad":"DISTANCIA VITUAL","nombre_corto":"AREA ANDINA","ciudad":"BOGOTA"},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD COOPERATIVA DE COLOMBIA-MEDELLIN","n":2652,"global_avg":132.06,"lectura":133.61,"razona":144.04,"ingles":136.2,"ciudadania":122.87,"escrita":123.58,"modalidad":"PRESENCIAL","nombre_corto":"U. COOPERATIVA DE COLOMBIA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"FUNDACION UNIVERSITARIA CATOLICA DEL NORTE-SANTA ROSA DE OSOS","n":1596,"global_avg":131.97,"lectura":134.35,"razona":141.92,"ingles":132.65,"ciudadania":124.6,"escrita":126.31,"modalidad":"DISTANCIA VITUAL","nombre_corto":"CATOLICA DEL NORTE","ciudad":"SANTA ROSA DE OSOS"},{"INST_NOMBRE_INSTITUCION":"CORPORACION UNIVERSITARIA AMERICANA-BARRANQUILLA","n":2267,"global_avg":128.53,"lectura":129.65,"razona":139.79,"ingles":126.39,"ciudadania":122.16,"escrita":124.65,"modalidad":"PRESENCIAL","nombre_corto":"U. AMERICANA","ciudad":"BARRANQUILLA"},{"INST_NOMBRE_INSTITUCION":"INSTITUTO TECNOLOGICO METROPOLITANO-MEDELLIN","n":7102,"global_avg":126.75,"lectura":125.04,"razona":145.52,"ingles":132.5,"ciudadania":113.35,"escrita":117.32,"modalidad":"PRESENCIAL","nombre_corto":"ITM","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"INSTITUCION UNIVERSITARIA SALAZAR Y HERRERA-MEDELLIN","n":1732,"global_avg":125.32,"lectura":123.19,"razona":140.57,"ingles":131.52,"ciudadania":113.85,"escrita":117.48,"modalidad":"PRESENCIAL","nombre_corto":"IU SALAZAR Y HERRERA","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"FUNDACION UNIVERSITARIA ESUMER-MEDELLIN","n":2569,"global_avg":123.71,"lectura":122.47,"razona":138.54,"ingles":127.55,"ciudadania":112.06,"escrita":117.92,"modalidad":"PRESENCIAL","nombre_corto":"ESUMER","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"INSTITUCION  UNIVERSITARIA PASCUAL BRAVO-MEDELLIN","n":2144,"global_avg":123.49,"lectura":121.66,"razona":142.35,"ingles":128.99,"ciudadania":111.63,"escrita":112.81,"modalidad":"PRESENCIAL","nombre_corto":"IU PASCUAL BRAVO","ciudad":"MEDELLIN"},{"INST_NOMBRE_INSTITUCION":"CORPORACION UNIVERSITARIA MINUTO DE DIOS -UNIMINUTO-BELLO","n":1218,"global_avg":122.0,"lectura":126.44,"razona":132.12,"ingles":123.01,"ciudadania":112.89,"escrita":115.53,"modalidad":"PRESENCIAL","nombre_corto":"UNIMINUTO BELLO","ciudad":"BELLO"}],"yearly_trends":[{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EIA-MEDELLIN","YEAR":2017,"PUNTAJE_GLOBAL":147.34},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EIA-MEDELLIN","YEAR":2018,"PUNTAJE_GLOBAL":159.22},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EIA-MEDELLIN","YEAR":2019,"PUNTAJE_GLOBAL":169.01},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EIA-MEDELLIN","YEAR":2020,"PUNTAJE_GLOBAL":174.61},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EIA-MEDELLIN","YEAR":2021,"PUNTAJE_GLOBAL":173.23},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EIA-MEDELLIN","YEAR":2022,"PUNTAJE_GLOBAL":174.83},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EIA-MEDELLIN","YEAR":2023,"PUNTAJE_GLOBAL":188.9},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD NACIONAL DE COLOMBIA-MEDELLIN","YEAR":2017,"PUNTAJE_GLOBAL":156.84},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD NACIONAL DE COLOMBIA-MEDELLIN","YEAR":2018,"PUNTAJE_GLOBAL":159.02},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD NACIONAL DE COLOMBIA-MEDELLIN","YEAR":2019,"PUNTAJE_GLOBAL":165.88},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD NACIONAL DE COLOMBIA-MEDELLIN","YEAR":2020,"PUNTAJE_GLOBAL":170.47},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD NACIONAL DE COLOMBIA-MEDELLIN","YEAR":2021,"PUNTAJE_GLOBAL":167.29},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD NACIONAL DE COLOMBIA-MEDELLIN","YEAR":2022,"PUNTAJE_GLOBAL":172.17},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD NACIONAL DE COLOMBIA-MEDELLIN","YEAR":2023,"PUNTAJE_GLOBAL":182.65},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EAFIT--MEDELLIN","YEAR":2017,"PUNTAJE_GLOBAL":153.42},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EAFIT--MEDELLIN","YEAR":2018,"PUNTAJE_GLOBAL":161.78},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EAFIT--MEDELLIN","YEAR":2019,"PUNTAJE_GLOBAL":170.39},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EAFIT--MEDELLIN","YEAR":2020,"PUNTAJE_GLOBAL":177.04},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EAFIT--MEDELLIN","YEAR":2021,"PUNTAJE_GLOBAL":173.19},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EAFIT--MEDELLIN","YEAR":2022,"PUNTAJE_GLOBAL":177.74},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD EAFIT--MEDELLIN","YEAR":2023,"PUNTAJE_GLOBAL":184.79},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD CES-MEDELLIN","YEAR":2017,"PUNTAJE_GLOBAL":149.35},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD CES-MEDELLIN","YEAR":2018,"PUNTAJE_GLOBAL":156.8},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD CES-MEDELLIN","YEAR":2019,"PUNTAJE_GLOBAL":167.94},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD CES-MEDELLIN","YEAR":2020,"PUNTAJE_GLOBAL":175.74},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD CES-MEDELLIN","YEAR":2021,"PUNTAJE_GLOBAL":173.49},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD CES-MEDELLIN","YEAR":2022,"PUNTAJE_GLOBAL":179.43},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD CES-MEDELLIN","YEAR":2023,"PUNTAJE_GLOBAL":183.7},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE ANTIOQUIA-MEDELLIN","YEAR":2017,"PUNTAJE_GLOBAL":148.94},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE ANTIOQUIA-MEDELLIN","YEAR":2018,"PUNTAJE_GLOBAL":155.46},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE ANTIOQUIA-MEDELLIN","YEAR":2019,"PUNTAJE_GLOBAL":164.47},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE ANTIOQUIA-MEDELLIN","YEAR":2020,"PUNTAJE_GLOBAL":170.84},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE ANTIOQUIA-MEDELLIN","YEAR":2021,"PUNTAJE_GLOBAL":169.6},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE ANTIOQUIA-MEDELLIN","YEAR":2022,"PUNTAJE_GLOBAL":172.88},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE ANTIOQUIA-MEDELLIN","YEAR":2023,"PUNTAJE_GLOBAL":176.44},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD PONTIFICIA BOLIVARIANA-MEDELLIN","YEAR":2017,"PUNTAJE_GLOBAL":151.93},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD PONTIFICIA BOLIVARIANA-MEDELLIN","YEAR":2018,"PUNTAJE_GLOBAL":160.05},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD PONTIFICIA BOLIVARIANA-MEDELLIN","YEAR":2019,"PUNTAJE_GLOBAL":168.19},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD PONTIFICIA BOLIVARIANA-MEDELLIN","YEAR":2020,"PUNTAJE_GLOBAL":175.23},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD PONTIFICIA BOLIVARIANA-MEDELLIN","YEAR":2021,"PUNTAJE_GLOBAL":174.52},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD PONTIFICIA BOLIVARIANA-MEDELLIN","YEAR":2022,"PUNTAJE_GLOBAL":176.94},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD PONTIFICIA BOLIVARIANA-MEDELLIN","YEAR":2023,"PUNTAJE_GLOBAL":176.61},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE MEDELLIN-MEDELLIN","YEAR":2017,"PUNTAJE_GLOBAL":149.01},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE MEDELLIN-MEDELLIN","YEAR":2018,"PUNTAJE_GLOBAL":155.61},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE MEDELLIN-MEDELLIN","YEAR":2019,"PUNTAJE_GLOBAL":163.74},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE MEDELLIN-MEDELLIN","YEAR":2020,"PUNTAJE_GLOBAL":165.85},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE MEDELLIN-MEDELLIN","YEAR":2021,"PUNTAJE_GLOBAL":167.82},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE MEDELLIN-MEDELLIN","YEAR":2022,"PUNTAJE_GLOBAL":171.43},{"INST_NOMBRE_INSTITUCION":"UNIVERSIDAD DE MEDELLIN-MEDELLIN","YEAR":2023,"PUNTAJE_GLOBAL":165.15}]};
+
+const NUCLEOS_LEADERS = {"ADMINISTRACION":"UNIVERSIDAD NACIONAL DE COLOMBIA","ARQUITECTURA":"UNIVERSIDAD EAFIT","BIOLOGIA, MICROBIOLOGIA Y AFINES":"UNIVERSIDAD EAFIT","CIENCIA POLITICA, RELACIONES INTERNACIONALES":"UNIVERSIDAD EAFIT","COMUNICACION SOCIAL, PERIODISMO Y AFINES":"UNIVERSIDAD NACIONAL DE COLOMBIA","CONTADURIA PUBLICA":"UNIVERSIDAD NACIONAL DE COLOMBIA","DERECHO Y AFINES":"UNIVERSIDAD NACIONAL DE COLOMBIA","DISEÑO":"UNIVERSIDAD NACIONAL DE COLOMBIA","ECONOMIA":"UNIVERSIDAD EAFIT","EDUCACION":"UNIVERSIDAD NACIONAL DE COLOMBIA","ENFERMERIA":"UNIVERSIDAD DE ANTIOQUIA","FISICA":"UNIVERSIDAD DE ANTIOQUIA","INGENIERIA CIVIL Y AFINES":"UNIVERSIDAD EIA","INGENIERIA DE SISTEMAS, TELEMATICA Y AFINES":"UNIVERSIDAD EIA","INGENIERIA INDUSTRIAL Y AFINES":"UNIVERSIDAD EIA","MEDICINA":"UNIVERSIDAD DE ANTIOQUIA","PSICOLOGIA":"UNIVERSIDAD EAFIT"};
+
+const unis = DATA.universities;
+const trends = DATA.yearly_trends;
+const maxScore = Math.max(...unis.map(u=>u.global_avg));
+let xp=0,level=1,racha=0,puntos=0;
+let openDetailId=null;
+let currentQuizQ=0,quizScore=0,quizAnswered=false;
+let guessState={uni:null,pistasShown:0,answered:false};
+let trendChartInst=null;
+
+function updateXP(pts){
+  puntos+=pts; xp+=pts*2;
+  if(xp>=level*100){level++;xp=xp%(level*100);}
+  document.getElementById('xpVal').textContent=xp;
+  document.getElementById('lvlVal').textContent=level;
+  document.getElementById('ptsVal').textContent=puntos;
+  document.getElementById('xpBar').style.width=Math.min(100,(xp/(level*100))*100)+'%';
+}
+function addRacha(v){
+  racha=v?racha+1:0;
+  document.getElementById('rachVal').textContent=racha;
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='quiz')initQuiz();
+  if(id==='guess')initGuess();
+  if(id==='trend')initTrend();
+}
+
+// ─── RANKING ───────────────────────────────
+function populateCityFilter(){
+  const cities=[...new Set(unis.map(u=>u.ciudad))].sort();
+  const sel=document.getElementById('rankCity');
+  cities.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+}
+function renderRanking(){
+  const metric=document.getElementById('rankMetric').value;
+  const city=document.getElementById('rankCity').value;
+  let list=city?unis.filter(u=>u.ciudad===city):[...unis];
+  list.sort((a,b)=>b[metric]-a[metric]);
+  const maxVal=Math.max(...list.map(u=>u[metric]));
+  const labels={'global_avg':'Puntaje global','ingles':'Inglés','razona':'Razonamiento cuant.','lectura':'Lectura crítica','ciudadania':'Compet. ciudadanas','escrita':'Comunicación escrita'};
+  let html='';
+  list.forEach((u,i)=>{
+    const numCls=i===0?'r1':i===1?'r2':i===2?'r3':'other';
+    const numStr=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+    const pct=Math.round((u[metric]/maxVal)*100);
+    const modal_id=u.INST_NOMBRE_INSTITUCION.replace(/[^a-z0-9]/gi,'_');
+    html+=`<div class="rank-item" onclick="toggleDetail('${modal_id}',${i})">
+      <div class="rank-num ${numCls}">${numStr}</div>
+      <div class="rank-info">
+        <div class="rank-name">${u.nombre_corto}</div>
+        <div class="rank-sub">${u.ciudad} · ${u.n.toLocaleString()} egresados</div>
+      </div>
+      <div class="rank-score">
+        <div class="score-val">${u[metric].toFixed(1)}</div>
+        <div class="score-lbl">${labels[metric]}</div>
+      </div>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${pct}%"></div></div>
+    </div>`;
+  });
+  document.getElementById('rankList').innerHTML=html;
+  document.getElementById('uniDetail').classList.remove('open');
+  document.getElementById('uniDetail').innerHTML='';
+  openDetailId=null;
+}
+
+function toggleDetail(id,idx){
+  const det=document.getElementById('uniDetail');
+  if(openDetailId===id){det.classList.remove('open');det.innerHTML='';openDetailId=null;return;}
+  openDetailId=id;
+  const metric=document.getElementById('rankMetric').value;
+  const city=document.getElementById('rankCity').value;
+  let list=city?unis.filter(u=>u.ciudad===city):[...unis];
+  list.sort((a,b)=>b[metric]-a[metric]);
+  const u=list[idx];
+  const maxG=Math.max(...unis.map(x=>x.global_avg));
+  const comps=[
+    {k:'lectura',l:'Lectura crítica',c:'#3a86ff'},
+    {k:'razona',l:'Razonamiento cuant.',c:'#8338ec'},
+    {k:'ingles',l:'Inglés',c:'#2a9d8f'},
+    {k:'ciudadania',l:'Compet. ciudadanas',c:'#e9c46a'},
+    {k:'escrita',l:'Comunicación escrita',c:'#f4a261'}
+  ];
+  let compHtml=comps.map(c=>`<div class="comp-item">
+    <div class="comp-label">${c.l}</div>
+    <div class="comp-val">${u[c.k].toFixed(1)}</div>
+    <div class="comp-bar"><div class="comp-fill" style="width:${Math.round((u[c.k]/300)*100)}%;background:${c.c}"></div></div>
+  </div>`).join('');
+  const trendData=trends.filter(t=>t.INST_NOMBRE_INSTITUCION===u.INST_NOMBRE_INSTITUCION);
+  const growth=trendData.length>=2?((trendData[trendData.length-1].PUNTAJE_GLOBAL-trendData[0].PUNTAJE_GLOBAL)/trendData[0].PUNTAJE_GLOBAL*100):0;
+  const growthStr=growth>0?`+${growth.toFixed(1)}%`:`${growth.toFixed(1)}%`;
+  const modBadge=u.modalidad==='DISTANCIA VITUAL'?'Virtual':(u.modalidad==='DISTANCIA'?'Distancia':'Presencial');
+  det.innerHTML=`<div class="detail-title">📊 ${u.nombre_corto}</div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:10px">${u.ciudad} · ${modBadge} · ${u.n.toLocaleString()} estudiantes evaluados</div>
+    <div style="display:flex;gap:12px;margin-bottom:12px;font-size:12px">
+      <div style="background:var(--bg3);border-radius:6px;padding:8px 14px;text-align:center"><div style="color:var(--t3);font-size:10px">Global</div><div style="font-size:18px;font-weight:700;color:var(--gold)">${u.global_avg.toFixed(1)}</div></div>
+      <div style="background:var(--bg3);border-radius:6px;padding:8px 14px;text-align:center"><div style="color:var(--t3);font-size:10px">Crecimiento 2017-2023</div><div style="font-size:18px;font-weight:700;color:${growth>=0?'#2a9d8f':'#e63946'}">${growthStr}</div></div>
+    </div>
+    <div class="comp-grid">${compHtml}</div>
+    <div class="insight-box">💡 <b>${u.nombre_corto}</b> se posiciona entre las ${idx<5?'mejores 5':'líderes'} en su categoría${u.ingles>170?' con especial fortaleza en inglés':u.razona>170?' destacando en razonamiento cuantitativo':' con un perfil equilibrado'}. ${growth>15?'Su crecimiento sostenido la consolida como institución en ascenso.':growth>0?'Mantiene una tendencia positiva en los últimos años.':'Presenta oportunidades de mejora en su trayectoria reciente.'}</div>`;
+  det.classList.add('open');
+  updateXP(5);
+}
+
+// ─── BATTLE ────────────────────────────────
+function populateBattleSelects(){
+  const selA=document.getElementById('uniA');
+  const selB=document.getElementById('uniB');
+  unis.forEach((u,i)=>{
+    const oA=document.createElement('option');oA.value=i;oA.textContent=u.nombre_corto;selA.appendChild(oA);
+    const oB=document.createElement('option');oB.value=i;oB.textContent=u.nombre_corto;selB.appendChild(oB);
+  });
+  selB.selectedIndex=1;
+}
+function runBattle(){
+  const a=unis[parseInt(document.getElementById('uniA').value)];
+  const b=unis[parseInt(document.getElementById('uniB').value)];
+  if(a===b){document.getElementById('battleResult').innerHTML='<div class="insight-box">⚠️ Selecciona dos universidades diferentes.</div>';document.getElementById('battleResult').classList.add('show');return;}
+  const winner=a.global_avg>=b.global_avg?a:b;
+  const comps=[
+    {k:'global_avg',l:'Puntaje global'},
+    {k:'ingles',l:'Inglés'},
+    {k:'razona',l:'Razonamiento cuant.'},
+    {k:'lectura',l:'Lectura crítica'},
+    {k:'ciudadania',l:'Compet. ciudadanas'},
+    {k:'escrita',l:'Comunicación escrita'}
+  ];
+  let rowsHtml=comps.map(c=>{
+    const maxV=Math.max(a[c.k],b[c.k]);
+    const pA=Math.round((a[c.k]/maxV)*100);
+    const pB=Math.round((b[c.k]/maxV)*100);
+    const winA=a[c.k]>=b[c.k];
+    return `<div>
+      <div class="cbb-vals"><span style="color:${winA?'#3a86ff':''}">${a[c.k].toFixed(1)}</span><span>${c.l}</span><span style="color:${!winA?'#e63946':''}">${b[c.k].toFixed(1)}</span></div>
+      <div class="comp-battle-bar-wrap">
+        <div class="cbb-left"><div class="cbb-fill-l" style="width:${pA}%"></div></div>
+        <div class="cbb-right"><div class="cbb-fill-r" style="width:${pB}%"></div></div>
+      </div></div>`;
+  }).join('');
+  const tA=trends.filter(t=>t.INST_NOMBRE_INSTITUCION===a.INST_NOMBRE_INSTITUCION);
+  const tB=trends.filter(t=>t.INST_NOMBRE_INSTITUCION===b.INST_NOMBRE_INSTITUCION);
+  const growA=tA.length>=2?((tA[tA.length-1].PUNTAJE_GLOBAL-tA[0].PUNTAJE_GLOBAL)/tA[0].PUNTAJE_GLOBAL*100):0;
+  const growB=tB.length>=2?((tB[tB.length-1].PUNTAJE_GLOBAL-tB[0].PUNTAJE_GLOBAL)/tB[0].PUNTAJE_GLOBAL*100):0;
+  const dif=Math.abs(a.global_avg-b.global_avg).toFixed(1);
+  const insights=[];
+  if(Math.abs(a.ingles-b.ingles)>10){insights.push(`${a.ingles>b.ingles?a.nombre_corto:b.nombre_corto} supera significativamente en inglés (+${Math.abs(a.ingles-b.ingles).toFixed(1)} pts).`);}
+  if(Math.abs(a.razona-b.razona)>10){insights.push(`${a.razona>b.razona?a.nombre_corto:b.nombre_corto} domina en razonamiento cuantitativo.`);}
+  insights.push(`La diferencia global es de ${dif} puntos${parseFloat(dif)<5?' — prácticamente empatadas.':', lo que representa una brecha notable.'}`);
+  document.getElementById('battleResult').innerHTML=`
+    <div class="battle-header">
+      <div><div class="battle-uni-name">${a.nombre_corto}</div><div class="battle-uni-score ${winner===a?'winner':'loser'}">${a.global_avg.toFixed(1)}</div>${winner===a?'<div class="winner-badge">🏆 GANADOR</div>':''}</div>
+      <div class="battle-vs-center"><span style="font-size:18px;color:var(--accent)">⚔️</span><span>VS</span></div>
+      <div><div class="battle-uni-name">${b.nombre_corto}</div><div class="battle-uni-score ${winner===b?'winner':'loser'}">${b.global_avg.toFixed(1)}</div>${winner===b?'<div class="winner-badge">🏆 GANADOR</div>':''}</div>
+    </div>
+    <div style="margin-bottom:12px">${rowsHtml}</div>
+    <div class="insight-box">💡 ${insights.join(' ')}</div>`;
+  document.getElementById('battleResult').classList.add('show');
+  updateXP(10);addRacha(true);
+}
+
+// ─── QUIZ ───────────────────────────────────
+const QUESTIONS=[
+  {q:'¿Cuál universidad lidera en puntaje de inglés en la base Saber Pro?',opts:['UNIVERSIDAD EAFIT','UNIVERSIDAD EIA','UNIVERSIDAD NACIONAL DE COLOMBIA','UNIVERSIDAD CES'],ans:1,explain:'Universidad EIA de Medellín encabeza el ranking con 202 puntos en inglés, seguida de EAFIT con 189 puntos.'},
+  {q:'¿Qué universidad tiene el mayor puntaje global según los datos Saber Pro?',opts:['UNIVERSIDAD NACIONAL DE COLOMBIA','UNIVERSIDAD EAFIT','UNIVERSIDAD EIA','UNIVERSIDAD CES'],ans:2,explain:'Universidad EIA lidera con un promedio global de 181 puntos, destacando en inglés y razonamiento cuantitativo.'},
+  {q:'¿Cuántas de las top-5 universidades en puntaje global son de Medellín?',opts:['2','3','4','5'],ans:3,explain:'Las 5 primeras (EIA, Nacional, EAFIT, CES, UdeA Oriente) son todas instituciones de la región de Antioquia / Medellín.'},
+  {q:'¿Cuál universidad privada supera en razonamiento cuantitativo a la mayoría de las públicas?',opts:['CEIPA','UNIVERSIDAD EAFIT','UNIVERSIDAD CES','POLITECNICO GRANCOLOMBIANO'],ans:1,explain:'EAFIT tiene 171 puntos en razonamiento cuantitativo, superando a UdeA (167) y otras públicas.'},
+  {q:'¿Qué institución virtual destaca con mayor puntaje global en la base?',opts:['UNAD','IU DIGITAL DE ANTIOQUIA','AREA ANDINA','CATOLICA DEL NORTE'],ans:1,explain:'IU Digital de Antioquia, con modalidad virtual, alcanza un promedio global de 150 puntos, superando a muchas instituciones presenciales.'},
+  {q:'¿Cuál universidad lidera en competencias ciudadanas?',opts:['UNIVERSIDAD EIA','UNIVERSIDAD CES','UNIVERSIDAD NACIONAL DE COLOMBIA','UNIVERSIDAD EAFIT'],ans:2,explain:'Universidad Nacional de Colombia encabeza en competencias ciudadanas con 165 puntos, reflejando su enfoque en formación integral.'},
+  {q:'¿Qué universidad tuvo mayor crecimiento entre 2017 y 2023 según los datos?',opts:['UNAULA','UNIVERSIDAD CES','UNIVERSIDAD EAFIT','IU DIGITAL DE ANTIOQUIA'],ans:1,explain:'Universidad CES pasó de 149 (2017) a 184 puntos (2023), un crecimiento de más de 23%, entre los más altos del conjunto.'},
+  {q:'¿Cuántas universidades en la base tienen modalidad virtual o a distancia?',opts:['1','2','3','4'],ans:3,explain:'Cuatro instituciones: IU Digital (virtual), UNAD (distancia), Área Andina (virtual) y Católica del Norte (virtual).'}
+];
+let quizIdx=0,quizPts=0,timerInt=null,timerSec=20;
+function initQuiz(){
+  quizIdx=0;quizPts=0;
+  renderQuestion();
+}
+function renderQuestion(){
+  clearInterval(timerInt);
+  if(quizIdx>=QUESTIONS.length){showQuizEnd();return;}
+  const q=QUESTIONS[quizIdx];
+  timerSec=20;
+  let html=`<div class="quiz-header"><span style="font-size:13px;color:var(--t2)">Pregunta ${quizIdx+1}/${QUESTIONS.length}</span><span class="quiz-score-badge">⭐ ${quizPts} pts</span></div>
+    <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
+    <div class="question-card">
+      <div class="q-num">Pregunta ${quizIdx+1}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="q-options">${q.opts.map((o,i)=>`<button class="q-opt" id="opt${i}" onclick="answerQuiz(${i})">${o}</button>`).join('')}</div>
+      <div class="answer-explain" id="qExplain">${q.explain}</div>
+    </div>
+    <button class="next-btn" id="nextBtn" onclick="nextQ()">Siguiente →</button>`;
+  document.getElementById('quizGame').innerHTML=html;
+  timerInt=setInterval(()=>{
+    timerSec--;
+    document.getElementById('timerBar').style.width=(timerSec/20*100)+'%';
+    if(timerSec<=0){clearInterval(timerInt);timeoutQ();}
+  },1000);
+}
+function answerQuiz(i){
+  clearInterval(timerInt);
+  const q=QUESTIONS[quizIdx];
+  document.querySelectorAll('.q-opt').forEach(b=>b.disabled=true);
+  document.getElementById('opt'+i).classList.add(i===q.ans?'correct':'wrong');
+  if(i===q.ans){
+    const pts=20+timerSec*2;quizPts+=pts;
+    document.getElementById('opt'+q.ans).classList.add('correct');
+    updateXP(pts);addRacha(true);
+  } else {
+    document.getElementById('opt'+q.ans).classList.add('correct');
+    addRacha(false);
+  }
+  document.getElementById('qExplain').classList.add('show');
+  document.getElementById('nextBtn').classList.add('show');
+}
+function timeoutQ(){
+  const q=QUESTIONS[quizIdx];
+  document.querySelectorAll('.q-opt').forEach(b=>b.disabled=true);
+  document.getElementById('opt'+q.ans).classList.add('correct');
+  document.getElementById('qExplain').classList.add('show');
+  document.getElementById('nextBtn').classList.add('show');
+  addRacha(false);
+}
+function nextQ(){quizIdx++;renderQuestion();}
+function showQuizEnd(){
+  const max=QUESTIONS.length*60;
+  const pct=Math.round(quizPts/max*100);
+  const medal=pct>=80?'🥇':pct>=60?'🥈':pct>=40?'🥉':'📚';
+  const msg=pct>=80?'¡Experto universitario!':pct>=60?'¡Buen conocimiento!':pct>=40?'Vas aprendiendo':'Sigue explorando';
+  document.getElementById('quizGame').innerHTML=`<div class="quiz-end">
+    <div class="final-score">${quizPts}</div>
+    <div class="final-label">puntos de ${max} posibles (${pct}%)</div>
+    <div class="medal">${medal}</div>
+    <div style="font-size:14px;color:var(--gold);font-weight:700;margin-bottom:4px">${msg}</div>
+    <button class="restart-btn" onclick="initQuiz()">🔄 Jugar de nuevo</button>
+  </div>`;
+  updateXP(quizPts);
+}
+
+// ─── GUESS GAME ─────────────────────────────
+const PISTAS_KEYS=['ciudad','modalidad','puntaje','fuerte','n'];
+function getUniPistas(u){
+  const fuerte=['lectura','razona','ingles','ciudadania','escrita'];
+  const fk=fuerte.reduce((a,b)=>u[a]>u[b]?a:b);
+  const flabels={'lectura':'Lectura crítica','razona':'Razonamiento cuant.','ingles':'Inglés','ciudadania':'Compet. ciudadanas','escrita':'Comunicación escrita'};
+  return [
+    {l:'🏙️ Ciudad',v:u.ciudad},
+    {l:'🎓 Modalidad',v:u.modalidad},
+    {l:'📊 Rango de puntaje',v:u.global_avg>=160?'Alto (160+)':u.global_avg>=140?'Medio-alto (140-160)':'Medio (120-140)'},
+    {l:'💪 Competencia más fuerte',v:flabels[fk]},
+    {l:'👥 Tamaño aprox.',v:u.n>10000?'Muy grande (>10k)':u.n>5000?'Grande (5k-10k)':u.n>2000?'Mediana (2k-5k)':'Pequeña (<2k)'}
+  ];
+}
+function initGuess(){
+  const idx=Math.floor(Math.random()*unis.length);
+  const u=unis[idx];
+  const pistas=getUniPistas(u);
+  const wrong=unis.filter(x=>x!==u).sort(()=>Math.random()-.5).slice(0,3).map(x=>x.nombre_corto);
+  const allOpts=[u.nombre_corto,...wrong].sort(()=>Math.random()-.5);
+  guessState={u,pistas,pistasShown:1,answered:false,allOpts,maxPts:100};
+  renderGuess();
+}
+function renderGuess(){
+  const {u,pistas,pistasShown,answered,allOpts}=guessState;
+  let pistasHtml=pistas.slice(0,pistasShown).map(p=>`<div class="guess-pista"><div><div class="pista-label">${p.l}</div><div class="pista-val">${p.v}</div></div></div>`).join('');
+  if(!answered&&pistasShown<pistas.length){
+    pistasHtml+=`<div style="text-align:center"><button class="pista-reveal" onclick="revealPista()">+ Ver otra pista (-20 pts)</button></div>`;}
+  const ptsLeft=Math.max(20,guessState.maxPts-(pistasShown-1)*20);
+  let optsHtml='';
+  if(!answered){
+    optsHtml=`<div style="font-size:12px;color:var(--t2);text-align:center;margin:10px 0">¿Qué universidad es? <b style="color:var(--gold)">(vale ${ptsLeft} pts)</b></div>
+      <div class="guess-opts">${allOpts.map(o=>`<button class="guess-opt" onclick="answerGuess('${o.replace(/'/g,"\\'")}')">${o}</button>`).join('')}</div>`;
+  }
+  document.getElementById('guessGame').innerHTML=`
+    <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:12px">🎓 ¿Qué universidad es?</div>
+    ${pistasHtml}${optsHtml}
+    <div id="guessResult"></div>
+    ${answered?`<button class="new-uni-btn" onclick="initGuess()">🔄 Nueva universidad</button>`:''}`;
+}
+function revealPista(){
+  if(guessState.pistasShown<guessState.pistas.length){guessState.pistasShown++;renderGuess();}
+}
+function answerGuess(name){
+  guessState.answered=true;
+  const correct=name===guessState.u.nombre_corto;
+  const pts=correct?Math.max(20,guessState.maxPts-(guessState.pistasShown-1)*20):0;
+  if(correct){updateXP(pts);addRacha(true);}else{addRacha(false);}
+  guessState.allOpts;
+  const opts=document.querySelectorAll('.guess-opt');
+  opts.forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===guessState.u.nombre_corto)b.classList.add('correct');
+    else if(b.textContent===name&&!correct)b.classList.add('wrong');
+  });
+  const rEl=document.getElementById('guessResult');
+  if(rEl){rEl.innerHTML=`<div class="points-label">${correct?`✅ ¡Correcto! <b>+${pts} pts</b>`:'❌ Incorrecto — la respuesta era <b>'+guessState.u.nombre_corto+'</b>'}</div>`;}
+  setTimeout(renderGuess,200);
+}
+
+// ─── TREND ──────────────────────────────────
+function initTrend(){
+  const sel=document.getElementById('trendUni');
+  if(sel.options.length>1)return;
+  const tUnis=[...new Set(trends.map(t=>t.INST_NOMBRE_INSTITUCION))];
+  tUnis.forEach(name=>{
+    const u=unis.find(x=>x.INST_NOMBRE_INSTITUCION===name);
+    const o=document.createElement('option');o.value=name;o.textContent=u?u.nombre_corto:name;sel.appendChild(o);
+  });
+}
+function renderTrend(){
+  const name=document.getElementById('trendUni').value;
+  if(!name)return;
+  const data=trends.filter(t=>t.INST_NOMBRE_INSTITUCION===name).filter(t=>t.YEAR<=2023);
+  const labels=data.map(d=>d.YEAR.toString());
+  const vals=data.map(d=>parseFloat(d.PUNTAJE_GLOBAL.toFixed(1)));
+  if(trendChartInst){trendChartInst.destroy();}
+  const ctx=document.getElementById('trendChart').getContext('2d');
+  trendChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Puntaje global',data:vals,borderColor:'#2a9d8f',backgroundColor:'rgba(42,157,143,0.1)',borderWidth:2,pointRadius:4,pointBackgroundColor:'#2a9d8f',fill:true,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#a8b8c8'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#a8b8c8'},grid:{color:'rgba(255,255,255,0.05)'},min:Math.max(0,Math.min(...vals)-20),max:Math.max(...vals)+20}}}});
+  const u=unis.find(x=>x.INST_NOMBRE_INSTITUCION===name);
+  const growth=vals.length>=2?((vals[vals.length-1]-vals[0])/vals[0]*100):0;
+  const max=Math.max(...vals);const min=Math.min(...vals);
+  const ins=document.getElementById('trendInsight');
+  ins.style.display='block';
+  ins.innerHTML=`💡 <b>${u?u.nombre_corto:name}</b> registró un puntaje máximo de <b>${max}</b> y mínimo de <b>${min}</b> entre 2017 y 2023. Crecimiento total: <b>${growth>0?'+':''}${growth.toFixed(1)}%</b>${growth>15?'. Institución con fuerte tendencia ascendente.':growth>0?'. Trayectoria estable y positiva.':'. Presenta altibajos en el período analizado.'}`;
+  updateXP(5);
+}
+
+// ─── INIT ────────────────────────────────────
+populateCityFilter();
+renderRanking();
+populateBattleSelects();
+</script>
